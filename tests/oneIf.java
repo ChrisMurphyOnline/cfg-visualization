@@ -8,6 +8,13 @@ public class MyClass {
              x = x * -1;   // line 3
              System.out.println(“hello”); // line 4
          }
+         if (){
+            ;
+         }
+         if (){
+            ;
+            ;
+         }
          return x; // line 5
      }
 }

@@ -8,9 +8,19 @@ public class MyClass {
          else if (a == 0) {
              a = 5;
          }
+         else if (a == 0) {
+             a = 5;
+         }
          else {
              x = 1;
          }
+         if (choop on the loop){
+            loopdy choopdy;
+         }
+         else {
+             x = 1;
+         }
+         
          return x; 
      }
 }
