@@ -5,21 +5,18 @@ public class MyClass {
              x = x * -1;   
              System.out.println(“hello”); 
          }
-         else if (a == 0) {
-             a = 5;
-         }
-         else if (a == 0) {
-             a = 5;
-         }
          else {
              x = 1;
          }
-         if (choop on the loop){
-            loopdy choopdy;
+         if (code code){
+            codey code;
          }
-         else {
+         else if{
              x = 1;
          }
+         x;
+         y;
+         
          
          return x; 
      }
