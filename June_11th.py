@@ -39,14 +39,14 @@ def main():
                 if line_info[line_num] == False:
                     next_valid_line = find_next_valid_line(line_num, line_info)
                     if next_valid_line:
-                        edges = create_edge(line_num, next_valid_line, edges)
+                        edges, nodes = create_edge(line_num, next_valid_line, edges, nodes)
                 
                 if line_info[line_num] == True:
                     next_valid_line = find_next_valid_line(line_num, line_info)
                     while next_valid_line and line_info.get(next_valid_line) in ['ei', 'e']:
                         next_valid_line = find_outside_valid_line(next_valid_line, line_info, conditionals, brace_groups)
                     if next_valid_line:
-                        edges = create_edge(line_num, next_valid_line, edges)
+                        edges, nodes = create_edge(line_num, next_valid_line, edges, nodes)
                 
                 if line_info[line_num] == 'i':
                     if_edges = if_statement(line_info, line_num, conditionals, brace_groups)
@@ -95,17 +95,17 @@ def else_if_statement(line_info, line_num, og_conditionals, brace_groups):
     next_valid_line = find_next_valid_line(line_num, line_info)
     
     if line_info.get(next_valid_line) == True:
-        edges = create_edge(line_num, next_valid_line, edges)
+        edges, nodes = create_edge(line_num, next_valid_line, edges, nodes)
         
     valid_end_line = find_next_valid_line(end_line, line_info)
 
     if line_info.get(valid_end_line) == False:
-        edges = create_edge(line_num, valid_end_line, edges)
+        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes(
     elif line_info.get(valid_end_line) in ['ei']:
-        edges = create_edge(line_num, valid_end_line, edges)
+        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes(
     elif line_info.get(valid_end_line) in ['e']:
         valid_end_line = find_next_valid_line(valid_end_line, line_info)
-        edges = create_edge(line_num, valid_end_line, edges)
+        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes(
     
     return edges
 
@@ -131,17 +131,17 @@ def if_statement(line_info, line_num, og_conditionals, brace_groups):
     next_valid_line = find_next_valid_line(line_num, line_info)
     
     if line_info.get(next_valid_line) == True:
-        edges = create_edge(line_num, next_valid_line, edges)
+        edges, nodes = create_edge(line_num, next_valid_line, edges, nodes)
         
     valid_end_line = find_next_valid_line(end_line, line_info)
     if line_info.get(valid_end_line) == False:
-        edges = create_edge(line_num, valid_end_line, edges)
+        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes(
     
     if line_info.get(valid_end_line) in ['ei']:
-        edges = create_edge(line_num, valid_end_line, edges)
+        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes(
     elif line_info.get(valid_end_line) in ['e']:
         valid_end_line = find_next_valid_line(valid_end_line, line_info)
-        edges = create_edge(line_num, valid_end_line, edges)
+        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes(
 
     return edges
 
@@ -216,7 +216,7 @@ def remove_comments(line):
         line = line.split('//')[0].strip()
     return line
 
-def create_edge(start, end, edges):
+def create_edge(start, end, edges, nodes(:
     """
     Create an edge between two lines for the graph.
     
