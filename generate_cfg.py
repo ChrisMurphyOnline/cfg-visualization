@@ -37,9 +37,6 @@ def main():
             elif brace_count >= 2:
                 total_lines += 1
     java_file.close() 
-    print(total_lines)
-    print(brace_count)
-    print(start_line)
     parse_bug_probabilities(txt_path, 'probabilities.txt', total_lines)
     try:
         with open(java_path, 'r') as java_file, open('probabilities.txt', 'r') as txt_file:
