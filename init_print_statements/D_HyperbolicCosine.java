@@ -1,5 +1,5 @@
 public class D_HyperbolicCosine {
-	public static double cosh(double x) {
+print("2"); 	public static double cosh(double x) {
 		print("3"); if (x != x) {
 			print("4"); return x;
 		}
@@ -50,10 +50,10 @@ public class D_HyperbolicCosine {
 		print("50"); return result;
 	}
 	
-	public static void print(String line) {
-		System.out.print(line + " ");
+print("53"); 	public static void print(String line) {
+print("54"); 		System.out.print(line + " ");
 	}
 	
-    public static final double LOG_MAX_VALUE = StrictMath.log(Double.MAX_VALUE);
-    public static final long HEX_40000000 = 0x40000000L; // 1073741824L
+print("57");     public static final double LOG_MAX_VALUE = StrictMath.log(Double.MAX_VALUE);
+print("58");     public static final long HEX_40000000 = 0x40000000L; // 1073741824L
 }
