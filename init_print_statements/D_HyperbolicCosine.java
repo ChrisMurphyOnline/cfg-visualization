@@ -1,5 +1,5 @@
 public class D_HyperbolicCosine {
-print("2"); 	public static double cosh(double x) {
+ 	public static double cosh(double x) {
 		print("3"); if (x != x) {
 			print("4"); return x;
 		}

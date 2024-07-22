@@ -1,5 +1,5 @@
 public class D_HyperbolicSine {
-print("2"); 	public static double sinh(double x) {
+ 	public static double sinh(double x) {
 print("3"); 		boolean negate = false;
 print("4"); 		if (x != x) {
 print("5"); 			return x;

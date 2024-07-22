@@ -1,5 +1,5 @@
 public class D_Log extends FastMath {
-print("2");     public static double log(final double x, final double[] hiPrec) { 
+     public static double log(final double x, final double[] hiPrec) { 
 print("3");         if (x==0) { 
 print("4");         	return Double.NEGATIVE_INFINITY;
         }
