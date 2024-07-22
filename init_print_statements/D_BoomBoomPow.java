@@ -1,5 +1,5 @@
  public class D_BoomBoomPow {
-print("2");  	public static double pow(final double x, final double y) {
+  	public static double pow(final double x, final double y) {
 print("3"); 		if (y == 0) {
 print("4"); 			return 1.0;
 		} 
