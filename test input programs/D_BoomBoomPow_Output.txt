@@ -1,8 +1,4 @@
-Line 14.0 has 85.0% possibility of containing the bug
-Line 18.0 has 100% possibility of containing the bug
-Line 15.0 has 55% possibility of containing the bug
-Line 19.0 has 74.0% possibility of containing the bug
-Line 20.0 has 35.0% possibility of containing the bug
-Line 23.0 has 44.0% possibility of containing the bug
-Line 27.0 has 21.0% possibility of containing the bug
-Line 28.0 has 12.0% possibility of containing the bug
+test0: 1 2 3 4 Fail
+test1: 1 2 100 Pass
+test2: 1 2 3 4 Fail
+test3: 1 2 3 4 Pass
