@@ -1,5 +1,5 @@
 public class D_Euclid {
- 	public static int gcd(int x, int y) {
+print("2"); 	public static int gcd(int x, int y) {
 print("3"); 		int a, b;
 print("4"); 		if (x > y) {
 print("5"); 			a = x ;   

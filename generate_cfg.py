@@ -1,4 +1,4 @@
-import os
+import sys, os
 import glob
 import subprocess
 import logging
@@ -19,8 +19,8 @@ def main():
         return
 
     java_path = java_files[0]
-    txt_path = txt_files
-    total_lines = 1
+    txt_path = txt_files[0]  # Assuming you want to process the first txt file as well.
+    total_lines = 0
     brace_count = 0
     start_line = 0
     with open(java_path, 'r') as java_file:
@@ -31,12 +31,12 @@ def main():
                 brace_count += 1
                 start_line += 1
                 total_lines += 1
-            elif brace_count<= 2:
+            elif brace_count <= 2:
                 start_line += 1
                 total_lines += 1
             elif brace_count >= 2:
                 total_lines += 1
-    java_file.close() 
+    
     parse_bug_probabilities(txt_path, 'probabilities.txt', total_lines)
     try:
         with open(java_path, 'r') as java_file, open('probabilities.txt', 'r') as txt_file:
@@ -44,11 +44,11 @@ def main():
             txt_lines = txt_file.readlines()
             
             # Dictionary to store the type of line information and color
-            line_info = {i: (None, None) for i in range(start_line, len(lines))}
+            line_info = {i: (None, None) for i in range(start_line, total_lines)}
             brace_groups = []  # To store the pairs of opening and closing braces
             stack = []  # To keep track of nested structures
             
-            for line_num in range(start_line, total_lines-start_line):
+            for line_num in range(start_line, total_lines):
                 line = lines[line_num - 1].strip()
                 txt_line = txt_lines[line_num - 1].strip()
                 line = remove_comments(line)
@@ -67,53 +67,51 @@ def main():
                         line_info[line_num] = ('r', txt_color)
                     else:
                         line_info[line_num] = (len(stack), txt_color) if stack else (False, txt_color)
-            
             brace_groups = sorted(brace_groups, key=lambda x: x[0])  # Sort brace groups based on starting brace
             edges = []  # To store the edges for the graph
             nodes = set()  # To store unique nodes for the graph
             conditionals = 0  # To keep track of the number of conditionals processed
             loop_ends = []
-            
-            for line_num in range(3, len(lines) - 1):
-                if line_info[line_num][0] == False:
-                    next_valid_line = find_next_valid_line(line_num, line_info)
-                    if next_valid_line:
-                        edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
-                elif isinstance(line_info.get(line_num)[0], int):
-                    next_valid_line = find_next_valid_line(line_num, line_info)
-                    while next_valid_line and line_info.get(next_valid_line)[0] in ['ei', 'e']:
-                        next_valid_line = find_outside_valid_line(next_valid_line, line_info, conditionals, brace_groups)
-                    if next_valid_line:
-                        if line_num not in loop_ends:
+            for line_num in range(start_line, total_lines - 1):
+                if line_info.get(line_num) is not None:
+                    if line_info[line_num][0] == False:
+                        next_valid_line = find_next_valid_line(line_num, line_info)
+                        if next_valid_line:
                             edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
-                elif line_info[line_num][0] == 'i':
-                    if_edges, nodes = if_statement(line_info, line_num, conditionals, brace_groups, nodes)
-                    edges.extend(if_edges)
-                    conditionals += 1
-                elif line_info[line_num][0] == 'ei':
-                    elseif_edges, nodes = else_if_statement(line_info, line_num, conditionals, brace_groups, nodes)
-                    edges.extend(elseif_edges)
-                    conditionals += 1
-                elif line_info[line_num][0] == 'e':
-                    conditionals += 1
-                elif line_info[line_num][0] == 'w':
-                    while_edges, nodes = while_loop(line_info, line_num, conditionals, brace_groups, nodes)
-                    loop_end = loop_check(line_info, line_num, conditionals, brace_groups)
-                    loop_ends.append(loop_end)
-                    edges.extend(while_edges)
-                    conditionals += 1
-                elif line_info[line_num][0] == 'f':
-                    for_edges, nodes = for_loop(line_info, line_num, conditionals, brace_groups, nodes)
-                    loop_end = loop_check(line_info, line_num, conditionals, brace_groups)
-                    loop_ends.append(loop_end)
-                    edges.extend(for_edges)
-                    conditionals += 1
-                    
+                    elif isinstance(line_info.get(line_num)[0], int):
+                        next_valid_line = find_next_valid_line(line_num, line_info)
+                        while next_valid_line and line_info.get(next_valid_line) is not None and line_info.get(next_valid_line)[0] in ['ei', 'e']:
+                            next_valid_line = find_outside_valid_line(next_valid_line, line_info, conditionals, brace_groups)
+                        if next_valid_line:
+                            if line_num not in loop_ends:
+                                edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
+                    elif line_info[line_num][0] == 'i':
+                        if_edges, nodes = if_statement(line_info, line_num, conditionals, brace_groups, nodes)
+                        edges.extend(if_edges)
+                        conditionals += 1
+                    elif line_info[line_num][0] == 'ei':
+                        elseif_edges, nodes = else_if_statement(line_info, line_num, conditionals, brace_groups, nodes)
+                        edges.extend(elseif_edges)
+                        conditionals += 1
+                    elif line_info[line_num][0] == 'e':
+                        conditionals += 1
+                    elif line_info[line_num][0] == 'w':
+                        while_edges, nodes = while_loop(line_info, line_num, conditionals, brace_groups, nodes)
+                        loop_end = loop_check(line_info, line_num, conditionals, brace_groups)
+                        loop_ends.append(loop_end)
+                        edges.extend(while_edges)
+                        conditionals += 1
+                    elif line_info[line_num][0] == 'f':
+                        for_edges, nodes = for_loop(line_info, line_num, conditionals, brace_groups, nodes)
+                        loop_end = loop_check(line_info, line_num, conditionals, brace_groups)
+                        loop_ends.append(loop_end)
+                        edges.extend(for_edges)
+                        conditionals += 1
+                        
             # Define the paths for the output files
             base_name = os.path.splitext(os.path.basename(java_path))[0]
             edges_file_path = os.path.join(directory, f"{base_name}_edges.dot")
             output_svg_path = os.path.join(directory, f"{base_name}_edges.svg")
-
             # Write edges to the .dot file
             with open(edges_file_path, 'w') as edges_file:
                 edges_file.write("strict digraph {\n")
@@ -127,7 +125,10 @@ def main():
             subprocess.run(["dot", "-Tsvg", edges_file_path, "-o", output_svg_path], check=True)
 
     except Exception as e:
-        logging.error(f'Error processing file {java_path}: {e}')
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
+
 
 def else_if_statement(line_info, line_num, og_conditionals, brace_groups, nodes):
     """
@@ -150,17 +151,18 @@ def else_if_statement(line_info, line_num, og_conditionals, brace_groups, nodes)
     start_line, end_line = brace_groups[conditionals]
     next_valid_line = find_next_valid_line(line_num, line_info)
     
-    if isinstance(line_info.get(next_valid_line)[0], int):
+    if next_valid_line is not None and isinstance(line_info.get(next_valid_line, (None,))[0], int):
         edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
         
     valid_end_line = find_next_valid_line(end_line, line_info)
-    if line_info.get(valid_end_line)[0] == False:
+    if valid_end_line is not None and line_info.get(valid_end_line, (None,))[0] == False:
         edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
-    elif line_info.get(valid_end_line)[0] in ['ei', 'r', 'i', 'w', 'f']:
+    elif valid_end_line is not None and line_info.get(valid_end_line, (None,))[0] in ['ei', 'r', 'i', 'w', 'f']:
         edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
-    elif line_info.get(valid_end_line)[0] in ['e']:
+    elif valid_end_line is not None and line_info.get(valid_end_line, (None,))[0] in ['e']:
         valid_end_line = find_next_valid_line(valid_end_line, line_info)
-        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
+        if valid_end_line is not None:
+            edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
     
     return edges, nodes
 
@@ -184,30 +186,40 @@ def if_statement(line_info, line_num, conditionals, brace_groups, nodes):
     start_line, end_line = brace_groups[conditionals]
     
     next_valid_line = find_next_valid_line(line_num, line_info)
-    if isinstance(line_info.get(next_valid_line)[0], int):
+    if next_valid_line is not None and isinstance(line_info.get(next_valid_line, (None,))[0], int):
         edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
-    
-    if line_info.get(next_valid_line)[0] in ['i']:
+    if next_valid_line is not None and line_info.get(next_valid_line, (None,))[0] in ['i']:
         edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
         cond_start_line, cond_end_line = brace_groups[conditionals]
+        
         next_valid_line = find_next_valid_line(cond_end_line, line_info)
-        if line_info[next_valid_line][0] == conditionals + 1 or line_info[next_valid_line][0] in ['ei', 'w', 'f', 'r', 'i']:
+        if next_valid_line is not None and (line_info.get(next_valid_line, (None,))[0] == conditionals + 1 or line_info.get(next_valid_line, (None,))[0] in ['ei', 'w', 'f', 'r', 'i']):
             edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)  
-    elif line_info.get(next_valid_line)[0] in ['r']:
+    elif next_valid_line is not None and line_info.get(next_valid_line, (None,))[0] in ['r']:
         edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
     
+    
     valid_end_line = find_next_valid_line(end_line, line_info)
-    if line_info.get(valid_end_line)[0] == False:
+    
+    if valid_end_line is not None and line_info.get(valid_end_line, (None,))[0] == False:
         edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
-    elif isinstance(line_info.get(valid_end_line)[0], int):
+    elif valid_end_line is not None and isinstance(line_info.get(valid_end_line, (None,))[0], int):
         edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
     
-    if line_info.get(valid_end_line)[0] in ['ei', 'w', 'f', 'r', 'i']:
+    if valid_end_line is not None and line_info.get(valid_end_line, (None,))[0] in ['ei', 'w', 'f', 'r', 'i']:
         edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
-    elif line_info.get(valid_end_line)[0] in ['e']:
-        valid_end_line = find_next_valid_line(valid_end_line, line_info)
-        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
-
+    
+    elif valid_end_line is not None and line_info.get(valid_end_line, (None,))[0] in ['e']:
+        next_brace = find_next_brace(end_line, line_info)
+        if next_brace > end_line and next_brace < valid_end_line:
+             next_start, next_end = brace_groups[conditionals+1]
+             valid_end_line = find_next_valid_line(next_end,line_info)
+             if valid_end_line is not None:
+                edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
+        else:
+            valid_end_line = find_next_valid_line(valid_end_line, line_info)
+            if valid_end_line is not None:
+                edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
     return edges, nodes
 
 def while_loop(line_info, line_num, conditionals, brace_groups, nodes):
@@ -231,9 +243,11 @@ def while_loop(line_info, line_num, conditionals, brace_groups, nodes):
     next_valid_line = find_next_valid_line(line_num, line_info)
     valid_end_line = find_outside_valid_line(line_num, line_info, conditionals, brace_groups)
     prev_valid_line = find_prev_valid_line(end_line, line_info)
-    edges, nodes = create_edge(prev_valid_line, line_num, edges, nodes, line_info)
-    edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
-    if isinstance(line_info.get(next_valid_line)[0], int):
+    if prev_valid_line is not None:
+        edges, nodes = create_edge(prev_valid_line, line_num, edges, nodes, line_info)
+    if valid_end_line is not None:
+        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
+    if next_valid_line is not None and isinstance(line_info.get(next_valid_line, (None,))[0], int):
         edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
     
     return edges, nodes
@@ -259,11 +273,17 @@ def for_loop(line_info, line_num, conditionals, brace_groups, nodes):
     next_valid_line = find_next_valid_line(line_num, line_info)
     valid_end_line = find_outside_valid_line(line_num, line_info, conditionals, brace_groups)
     prev_valid_line = find_prev_valid_line(end_line, line_info)
-    edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
-    edges, nodes = create_edge(prev_valid_line, line_num, edges, nodes, line_info)
-    edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
-    if isinstance(line_info.get(next_valid_line)[0], int):
-        edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
+
+    if valid_end_line is not None:
+        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
+    if prev_valid_line is not None:
+        if line_info.get(prev_valid_line, (None,))[0] != 'r':
+            edges, nodes = create_edge(prev_valid_line, line_num, edges, nodes, line_info)
+    if valid_end_line is not None:
+        edges, nodes = create_edge(line_num, valid_end_line, edges, nodes, line_info)
+    if next_valid_line is not None:
+        if isinstance(line_info.get(next_valid_line, (None,))[0], int) or line_info.get(next_valid_line, (None,))[0] in ['ei', 'r', 'i', 'w', 'f']:
+            edges, nodes = create_edge(line_num, next_valid_line, edges, nodes, line_info)
     
     return edges, nodes
 
@@ -293,9 +313,18 @@ def get_statement(line, line_info, line_num, txt_color):
 
 def loop_check(line_info, line_num, conditionals, brace_groups):
     start_line, end_line = brace_groups[conditionals]
-    return find_prev_valid_line(end_line, line_info)
+    loop_end = find_prev_valid_line(end_line, line_info)
+    if line_info[loop_end][0] in ['r', 'e']:
+        return
+    else:
+        return find_prev_valid_line(end_line, line_info)
     
 
+def find_next_brace(line_num, line_info):
+    for i in range(line_num + 1, max(line_info.keys()) + 1):
+        if line_info.get(i, (None,))[0] == '}':
+            return i
+    return None
 def find_next_valid_line(line_num, line_info):
     """
     Find the next valid line number that contains relevant information.
@@ -307,8 +336,9 @@ def find_next_valid_line(line_num, line_info):
     Returns:
         int: The next valid line number.
     """
+    
     for i in range(line_num + 1, max(line_info.keys()) + 1):
-        if line_info.get(i)[0] is not None and line_info.get(i)[0] != '}':
+        if line_info.get(i, (None,))[0] is not None and line_info.get(i, (None,))[0] != '}':
             return i
     return None
 
@@ -324,7 +354,7 @@ def find_prev_valid_line(line_num, line_info):
         int: The previous valid line number.
     """
     for i in range(line_num - 1, 0, -1):
-        if line_info.get(i)[0] is not None and line_info.get(i)[0] != '}' and line_info.get(i)[0] != 'e':
+        if line_info.get(i, (None,))[0] is not None and line_info.get(i, (None,))[0] != '}' and line_info.get(i, (None,))[0] != 'e':
             return i
     return None
 
@@ -341,12 +371,12 @@ def find_outside_valid_line(valid_end_line, line_info, conditionals, brace_group
     Returns:
         int: The next valid line number outside of conditionals.
     """
-    while valid_end_line and line_info.get(valid_end_line)[0] in ['e', 'w', 'f']:
+    while valid_end_line and line_info.get(valid_end_line, (None,))[0] in ['e', 'w', 'f']:
         if conditionals >= len(brace_groups):
             return None
         start_line, end_line = brace_groups[conditionals]
         valid_end_line = find_next_valid_line(end_line, line_info)
-        if line_info.get(valid_end_line)[0] in ['i', 'r', 'f', 'w', 'ei']:
+        if valid_end_line is not None and line_info.get(valid_end_line, (None,))[0] in ['i', 'r', 'f', 'w', 'ei']:
             break
         conditionals += 1
     return valid_end_line
@@ -410,25 +440,22 @@ def remove_comments(line):
     return line
 
 def parse_bug_probabilities(input_file_path, output_file_path, total_lines):
-    # Initialize dictionary with all probabilities set to 0.0, starting from line 1
     # Initialize dictionaries with all counts set to 0, starting from line 1
     false_count = {i: 0 for i in range(1, total_lines + 1)}
     total_false = 0
     true_count = {i: 0 for i in range(1, total_lines + 1)}
     total_true = 0
-    repeats = [None] * (total_lines + 1)
     
-    with open(input_file_path[0], 'r') as file:
+    with open(input_file_path, 'r') as file:
         for line in file:
             line = line.strip()
             if line.startswith('test'):
                 # Reset list for each new line
                 repeats = [False] * (total_lines + 1)
                 
-                if line.endswith('Fail'):
+                parts = line.split()
+                if parts[-1] == 'Fail':
                     total_false += 1
-                    # Split the line into parts and parse the numbers
-                    parts = line.split()
                     for part in parts:
                         if part.isdigit():
                             num = int(part)
@@ -436,53 +463,37 @@ def parse_bug_probabilities(input_file_path, output_file_path, total_lines):
                                 false_count[num] += 1
                                 repeats[num] = True
                 
-                elif line.endswith('Pass'):
+                elif parts[-1] == 'Pass':
                     total_true += 1
-                    # Split the line into parts and parse the numbers
-                    parts = line.split()
                     for part in parts:
                         if part.isdigit():
                             num = int(part)
                             if 1 <= num <= total_lines and not repeats[num]:
                                 true_count[num] += 1
-                                repeats[num] = True        # print(total_false)
-                                
-    
-    probabilities = [0.0] * (total_lines)
+                                repeats[num] = True
+
+    probabilities = [0.0] * total_lines
     for line_num in range(1, total_lines + 1):
-        percent_fail = false_count[line_num]/total_false
-        percent_true = true_count[line_num]/total_true
-        if percent_true or percent_fail != 0:
+        percent_fail = false_count[line_num] / total_false if total_false > 0 else 0
+        percent_true = true_count[line_num] / total_true if total_true > 0 else 0
+        if percent_fail + percent_true > 0:
             prob = percent_fail / (percent_fail + percent_true)
         else:
             prob = 0.0
-        probabilities[line_num-1] = prob
-    min_prob = 1
-    max_prob = 0
-    for i in range(len(probabilities)):
-        if min_prob > probabilities[i]:
-            min_prob = probabilities[i]
-        if max_prob < probabilities[i]:
-            max_prob = probabilities[i]
-    if max_prob and min_prob == 0:
-        x = 3
+        probabilities[line_num - 1] = prob
+
+    min_prob = min(probabilities)
+    max_prob = max(probabilities)
+
+    if max_prob != min_prob:
+        probabilities = [(prob - min_prob) / (max_prob - min_prob) for prob in probabilities]
     else:
-        for i in range(len(probabilities)):
-            numerator = probabilities[i] - min_prob
-            denominator = max_prob - min_prob
-            if denominator == 0:
-                probabilities[i] = 1.0
-            else:
-                probabilities[i] = numerator/denominator
-                
-    
+        probabilities = [0.0 for _ in probabilities]
+
     with open(output_file_path, 'w') as file:
-        idx = 0
-        for line_num in range(1, total_lines + 1):
-            #print(f'Line {line_num} occurs in {false_count[line_num]} Fail and {true_count[line_num]} Pass.')
-            file.write(f'{probabilities[idx]}\n')
-            idx += 1
-    
+        for prob in probabilities:
+            file.write(f'{prob}\n')
+
 
 def create_edge(start, end, edges, nodes, line_info):
     """
