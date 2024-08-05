@@ -54,4 +54,8 @@ print("50"); 						classmates.add(otherStudent);
 		}
 print("55"); 		return classmates;
 	}
+ 	
+ 	public static void print(String in) {
+ 		System.out.print(in + " ");
+ 	}
 }

@@ -1,11 +1,19 @@
-import static org.junit.Assert.*;
+//import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
 import java.util.*;
 
 public class FriendFinderTest {
 	
+	private static int which = 1;
+	
+	@Before
+	public void printTestNumber() {
+		System.out.print("test" + which++ + ": ");		
+	}
+	
 	@Test
-	public void testNoCourses() {
+	public void testNoCourses() {		
 		Map<String, List<String>> rosters = new HashMap<>();
 		rosters.put("21", List.of("A", "B", "C"));
 		rosters.put("31", List.of("A", "C", "D"));
@@ -48,16 +56,30 @@ public class FriendFinderTest {
 		assertEquals(Set.of("B", "C"), result);
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
+	@Test//(expected=IllegalArgumentException.class)
 	public void testNullName() {
 		Map<String, List<String>> rosters = new HashMap<>();
 		rosters.put("21", List.of("A", "B", "C"));
-		FriendFinder.findClassmates(null, rosters);
+		try {
+			FriendFinder.findClassmates(null, rosters);
+		}
+		catch (IllegalArgumentException e) {
+			System.out.println("Pass");
+			return;
+		}
+		System.out.println("Fail");
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
+	@Test//(expected=IllegalArgumentException.class)
 	public void testNullRosters() {
-		FriendFinder.findClassmates("A", null);
+		try {
+			FriendFinder.findClassmates("A", null);
+		}
+		catch (IllegalArgumentException e) {
+			System.out.println("Pass");
+			return;
+		}
+		System.out.println("Fail");
 	}
 	
 	@Test
@@ -82,5 +104,15 @@ public class FriendFinderTest {
 		
 		Set<String> result = FriendFinder.findClassmates("A", rosters);
 		assertEquals(Set.of("B"), result);
+	}
+	
+	public void assertEquals(Object o1, Object o2) {
+		if (o1.equals(o2)) System.out.println("Pass");
+		else System.out.println("Fail");
+	}
+	
+	public void assertTrue(boolean b) {
+		if (b) System.out.println("Pass");
+		else System.out.println("Fail");
 	}
 }
