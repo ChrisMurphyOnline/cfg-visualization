@@ -3,7 +3,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.*;
 
 public class FriendFinder {
-print("6"); 	public static Set<String> findClassmates(String name, Map<String, List<String>> rosters) {
+ 	public static Set<String> findClassmates(String name, Map<String, List<String>> rosters) {
 print("7"); 		if (rosters == null || rosters.isEmpty()) {
 print("8"); 			throw new IllegalArgumentException("Rosters can't be null or empty");			
 		}
